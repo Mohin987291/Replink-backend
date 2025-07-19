@@ -16,9 +16,7 @@
     "sourceMap": true,
     "types": ["node"]
   },
-  "include": [
-    "**/*.ts"
-  ],
+  "include": ["./**/*.ts", "generated/prisma"],
   "exclude": [
     "node_modules",
     "dist"

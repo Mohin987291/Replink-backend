@@ -7,7 +7,8 @@
     "dev": "tsx watch server.ts",
     "dev:ts-node": "ts-node --esm server.ts",
     "seed": "ts-node prisma/seeder.ts",
-    "build": "tsc",
+    "build": "npx prisma generate && tsc && npm run copy-generated",
+    "copy-generated": "cp -r generated dist/generated",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
