@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Companies {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  Gigs      Gigs[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Reports   Reports[]
+
+  @@index([email, id], name: "companies_email_idx")
+}
+
+model Gigs {
+  id           String         @id @default(cuid())
+  title        String
+  description  String
+  price        Float
+  status       GigStatus      @default(ACTIVE)
+  latitude     Float
+  longitude    Float
+  Location     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  companyId    String
+  company      Companies      @relation(fields: [companyId], references: [id])
+  Applications Applications[]
+  Reports      Reports[]
+
+  @@index([companyId, id], name: "gigs_company_idx")
+}
+
+enum GigStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Reps {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  password     String
+  profilePic   String?
+  phoneNo      String?
+  bio          String?
+  rating       Float          @default(0)
+  ratingCount  Float          @default(0)
+  isVerified   Boolean        @default(false)
+  isPassed     Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Applications Applications[]
+  Reports      Reports[]
+
+  @@index([email, id], name: "reps_email_idx")
+}
+
+model Applications {
+  id        String    @id @default(cuid())
+  gigId     String
+  repId     String
+  status    AppStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  gig Gigs @relation(fields: [gigId], references: [id])
+  rep Reps @relation(fields: [repId], references: [id])
+
+  @@index([gigId, repId], name: "applications_gig_rep_idx")
+}
+
+enum AppStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Reports {
+  id        String   @id @default(cuid())
+  companyId String
+  gigId     String
+  repId     String
+  reason    String
+  imageUrl  String?
+  latitude  Float
+  longitude Float
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  gig     Gigs      @relation(fields: [gigId], references: [id])
+  rep     Reps      @relation(fields: [repId], references: [id])
+  company Companies @relation(fields: [companyId], references: [id])
+
+  @@index([gigId, repId, companyId], name: "reports_gig_rep_idx")
+}
