@@ -22,7 +22,7 @@ const start = async (): Promise<void> => {
     // Register CORS
     await fastify.register(cors, {
       origin: process.env.NODE_ENV === 'production' 
-        ? ['https://yourdomain.com'] 
+        ? ['https://replink-frontend.vercel.app'] 
         : ['http://localhost:3000'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -61,7 +61,7 @@ const start = async (): Promise<void> => {
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
   
     
-    await fastify.listen({ port, host:'0.0.0.0' });
+    await fastify.listen({ port, host:'localhost' });
 
     console.log(`Server is running on http://0.0.0.0:${port}`);
   } catch (err) {
