@@ -7,11 +7,11 @@
     "dev": "tsx watch server.ts",
     "dev:ts-node": "ts-node --esm server.ts",
     "seed": "ts-node prisma/seeder.ts",
-    "build": "npm install && npx prisma generate && tsc && npm run copy-generated",
+    "build": "npx prisma generate && tsc && npm run copy-generated",
     "copy-generated": "cp -r generated dist/generated",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-},
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -29,15 +29,13 @@
     "fastify": "^5.4.0",
     "fastify-rate-limit": "^5.8.0",
     "instead": "^1.0.3",
-    "jsonwebtoken": "^9.0.2"
-  },
-  "devDependencies": {
+    "jsonwebtoken": "^9.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.12",
-    "prisma": "^6.11.1",
+    "typescript": "^5.8.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "prisma": "^6.11.1"
   }
 }
