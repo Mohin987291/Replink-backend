@@ -22,7 +22,7 @@ const start = async (): Promise<void> => {
     // Register CORS
     await fastify.register(cors, {
       origin: process.env.NODE_ENV === 'production' 
-        ? ['https://replink-topaz.vercel.app/'] 
+        ? ['https://replink-topaz.vercel.app'] 
         : ['http://localhost:3000'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
