@@ -20,10 +20,15 @@ const fastify: FastifyInstance = Fastify();
 const start = async (): Promise<void> => {
   try {
     // Register CORS
+    const corsOrigins = process.env.NODE_ENV === 'production'
+      ? ['https://replink-beta.vercel.app']
+      : ['http://localhost:3000'];
+
+    console.log('CORS Origins:', corsOrigins);
+
+    // Register CORS
     await fastify.register(cors, {
-      origin: process.env.NODE_ENV === 'production' 
-        ? ['https://replink-frontend.vercel.app/'] 
-        : ['http://localhost:3000'],
+      origin: corsOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     });
@@ -44,8 +49,8 @@ const start = async (): Promise<void> => {
 
     // Health check endpoint
     fastify.get('/health', async (request, reply) => {
-      return { 
-        status: 'OK', 
+      return {
+        status: 'OK',
         timestamp: new Date().toISOString(),
         service: 'Replink Backend'
       };
@@ -59,9 +64,9 @@ const start = async (): Promise<void> => {
     fastify.register(reportRoutes, { prefix: '/api/v1' });
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-  
-    
-    await fastify.listen({ port, host:'0.0.0.0' });
+
+
+    await fastify.listen({ port, host: '0.0.0.0' });
 
 
     console.log(`Server is running on http://0.0.0.0:${port}`);
