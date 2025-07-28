@@ -9,6 +9,7 @@ import { gigsRoutes } from './routes/gigs.routes.js';
 import { repsRoutes } from './routes/reps.routes.js';
 import { applicationRoutes } from './routes/aplication.routes.js';
 import { reportRoutes } from './routes/report.route.js';
+import { adminRoutes } from './routes/adminRoutes.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -62,11 +63,12 @@ const start = async (): Promise<void> => {
     fastify.register(repsRoutes, { prefix: '/api/v1' });
     fastify.register(applicationRoutes, { prefix: '/api/v1' });
     fastify.register(reportRoutes, { prefix: '/api/v1' });
+    fastify.register(adminRoutes, { prefix: '/api/v1' });
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 
-    await fastify.listen({ port, host: '0.0.0.0' });
+    await fastify.listen({ port, host: 'localhost' });
 
 
     console.log(`Server is running on http://0.0.0.0:${port}`);

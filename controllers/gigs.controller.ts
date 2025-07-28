@@ -6,14 +6,14 @@ import axios from "axios";
 
 
 export const createGig = asyncHandle(async (request: FastifyRequest, reply: FastifyReply) => {
-    const { title, description, price, latitude, longitude }: Gigs = request.body as Gigs;
+    const { title, description, price, latitude, longitude, target }: Gigs = request.body as Gigs;
     const companyId = request.company?.id; // Assuming companyId is available in the request context
 
     if (!title || !description || !companyId || !price) {
         return errorHandle('All fields are required', reply, 400);
     }
 
-    const data: Gigs = { title, description, price, latitude, longitude, companyId };
+    const data: Gigs = { title, description, price, latitude, longitude, companyId, target };
 
     const location = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${latitude},${longitude}`);
 

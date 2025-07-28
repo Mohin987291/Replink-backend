@@ -34,6 +34,7 @@ model Gigs {
   description  String
   price        Float
   status       GigStatus      @default(ACTIVE)
+  target       Int
   latitude     Float
   longitude    Float
   Location     String?
@@ -53,21 +54,23 @@ enum GigStatus {
 }
 
 model Reps {
-  id           String         @id @default(cuid())
-  name         String
-  email        String         @unique
-  password     String
-  profilePic   String?
-  phoneNo      String?
-  bio          String?
-  rating       Float          @default(0)
-  ratingCount  Float          @default(0)
-  isVerified   Boolean        @default(false)
-  isPassed     Boolean        @default(false)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  Applications Applications[]
-  Reports      Reports[]
+  id              String            @id @default(cuid())
+  name            String
+  email           String            @unique
+  password        String
+  profilePic      String?
+  phoneNo         String?
+  bio             String?
+  rating          Float             @default(0)
+  ratingCount     Float             @default(0)
+  isVerified      Boolean           @default(false)
+  isPassed        Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  isFraud         Boolean           @default(false)
+  Applications    Applications[]
+  Reports         Reports[]
+  SuspeciousTable SuspeciousTable[]
 
   @@index([email, id], name: "reps_email_idx")
 }
@@ -110,4 +113,20 @@ model Reports {
   company Companies @relation(fields: [companyId], references: [id])
 
   @@index([gigId, repId, companyId], name: "reports_gig_rep_idx")
+}
+
+model SuspeciousTable {
+  id    String @id @default(cuid())
+  repId String
+  rep   Reps   @relation(fields: [repId], references: [id])
+  reason String 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Admin {
+  id    String @id @default(cuid())
+  email String @unique
+  password String
+  name String
 }

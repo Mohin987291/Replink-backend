@@ -5,4 +5,5 @@ export interface Gigs {
     latitude: number;
     longitude: number;
     companyId: string;
+    target: number
 }

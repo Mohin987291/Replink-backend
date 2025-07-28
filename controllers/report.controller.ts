@@ -1,8 +1,9 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { Report } from '../types/report.types.js';
 import { asyncHandle, successHandle, errorHandle } from '../utils/handler.js';
-import { getReportsByGigId, createReport, getReportByCompanyId } from '../services/report.service.js';
+import { getReportsByGigId, createReport, getReportByCompanyId, getReportsByRepId } from '../services/report.service.js';
 import { createClient } from '@supabase/supabase-js';
+import { validateReportData } from '../utils/checkSuspeciousActivity.js';
 import axios from 'axios';
 
 // Initialize Supabase client
@@ -31,13 +32,13 @@ export const getReportsByGigIdHandler = asyncHandle(async (request: FastifyReque
 
   if (isRep) {
     const repId = request.Rep?.id;
-    if (reports.length > 0 && repId != reports[0].repId) {
+    if (repId != reports.reports[0].repId) {
       return errorHandle('Unauthorized access to reports', reply, 403);
     }
     return successHandle(reports, reply, 200);
   }
 
-  if (reports.length > 0 && reports[0].companyId !== companyId) {
+  if (reports.reports[0].companyId !== companyId) {
     return errorHandle('Unauthorized access to reports', reply, 403);
   }
 
@@ -144,6 +145,8 @@ export const createReportHandler = asyncHandle(async (request: FastifyRequest, r
   } else {
     successHandle(report, reply, 201);
   }
+  await validateReportData(report.repId).catch(console.error)
+
 });
 
 export const getReportByCompanyIdHandler = asyncHandle(async (request: FastifyRequest, reply: FastifyReply) => {
@@ -154,6 +157,23 @@ export const getReportByCompanyIdHandler = asyncHandle(async (request: FastifyRe
   }
 
   const reports = await getReportByCompanyId(companyId);
+
+  if (typeof reports === 'string') {
+    return errorHandle(reports, reply, 500);
+  }
+
+  return successHandle(reports, reply, 200);
+});
+
+export const getReportsByRepIdHandler = asyncHandle(async (request: FastifyRequest, reply: FastifyReply) => {
+  const { repId } = request.params as { repId: string };
+  const { page } = request.query as { page: number };
+
+  if (!repId) {
+    return errorHandle('Rep ID is required', reply, 400);
+  }
+
+  const reports = await getReportsByRepId(repId, page);
 
   if (typeof reports === 'string') {
     return errorHandle(reports, reply, 500);

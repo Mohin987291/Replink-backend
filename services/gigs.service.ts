@@ -14,6 +14,7 @@ export const CreateGig = async (data:Gigs, location: string):Promise<Gigs|string
                 longitude: data.longitude,
                 Location: location,
                 companyId: data.companyId,
+                target: data.target,
             }
         });
         return gig;
@@ -39,12 +40,10 @@ export const GetGigs = async (page:number) => {
                 title: true,
                 description: true,
                 price: true,
-                latitude: true,
-                longitude: true,
                 Location: true,
                 createdAt: true,
-                updatedAt: true,
                 status: true,
+                target: true,
                 company:{
                     select: {
                         id: true,
@@ -102,11 +101,8 @@ export const GetGigsByLocation = async (lat: number, lng: number, page: number) 
                 title: true,
                 description: true,
                 price: true,
-                latitude: true,
-                longitude: true,
                 Location: true,
                 createdAt: true,
-                updatedAt: true,
                 status: true,
                 company:{
                     select: {
@@ -145,6 +141,7 @@ export const GetGigById = async (id: string) => {
                 latitude: true,
                 longitude: true,
                 Location: true,
+                target: true,
                 createdAt: true,
                 updatedAt: true,
                 status: true,
@@ -191,6 +188,7 @@ export const GetGigsByCompanyId = async (companyId: string, page: number) => {
                 createdAt: true,
                 updatedAt: true,
                 status: true,
+                target:true,
                 _count:{
                     select:{
                         Applications:true

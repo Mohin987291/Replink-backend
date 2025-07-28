@@ -5,9 +5,16 @@ const prisma = new PrismaClient();
 
 export const getReportsByGigId = async (gigId: string) => {
   try {
+    const target = await prisma.gigs.findUnique({
+      where: { id: gigId },
+      select: { 
+        target: true,
+        price: true,
+      },
+    });
     const reports = await prisma.reports.findMany({
       where: { gigId },
-      select:{
+      select: {
         id: true,
         gigId: true,
         repId: true,
@@ -19,17 +26,20 @@ export const getReportsByGigId = async (gigId: string) => {
         companyId: true,
         createdAt: true,
         updatedAt: true,
-        rep:{
-            select: {
-                id: true,
-                name: true,
-                email: true,
-            },
+        rep: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       }
     });
-    return reports;
-  } catch (error:unknown) {
+    return {
+      target:target,
+      reports
+    };
+  } catch (error: unknown) {
     console.error("Error fetching reports:", error);
     return 'Error fetching reports';
   }
@@ -51,7 +61,7 @@ export const createReport = async (data: Report) => {
       }
     });
     return report;
-  } catch (error:unknown) {
+  } catch (error: unknown) {
     console.error("Error creating report:", error);
     return 'Error creating report';
   }
@@ -82,11 +92,49 @@ export const getReportByCompanyId = async (companyId: string) => {
           }
         }
       },
-      take:10
+      take: 10
     });
     return reports;
-  } catch (error:unknown) {
+  } catch (error: unknown) {
     console.error("Error fetching reports by company ID:", error);
     return 'Error fetching reports by company ID';
+  }
+}
+
+export const getReportsByRepId = async (repId: string, page: number) => {
+  try {
+    const totalReports = await prisma.reports.count({
+      where: { repId },
+    });
+    const reports = await prisma.reports.findMany({
+      where: { repId },
+      skip: (page - 1) * 10,
+      select: {
+        id: true,
+        gigId: true,
+        repId: true,
+        reason: true,
+        imageUrl: true,
+        latitude: true,
+        longitude: true,
+        location: true,
+        companyId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 10
+    });
+    return {
+      reports,
+      totalReports,
+      page,
+      totalPages: Math.ceil(totalReports / 10),
+    };
+  } catch (error: unknown) {
+    console.error("Error fetching reports by rep ID:", error);
+    return 'Error fetching reports by rep ID';
   }
 }

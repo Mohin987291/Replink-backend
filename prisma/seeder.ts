@@ -139,23 +139,32 @@ async function main() {
   }
 
   // Create Medical Representatives with properly hashed passwords
+  // Ensure at least 70% are passed (isPassed = true) to have enough reps for applications
   console.log('👨‍⚕️ Creating medical representatives...');
   const reps = [];
+  const passedReps = [];
+  
   for (let i = 0; i < 50; i++) {
     const hashedPassword = await bcryptjs.hash('password123', 10);
+    const isPassed = i < 35; // Make 35 out of 50 reps passed (70%)
+    
     const rep = await prisma.reps.create({
       data: {
         name: generateIndonesianName(),
         email: `medrep${i + 1}@example.com`,
         password: hashedPassword,
         isVerified: faker.datatype.boolean(0.85),
-        isPassed: faker.datatype.boolean(0.75),
+        isPassed: isPassed,
       },
     });
+    
     reps.push(rep);
+    if (isPassed) {
+      passedReps.push(rep);
+    }
   }
 
-  // Create Medical Visit Gigs (initially all ACTIVE)
+  // Create Medical Visit Gigs with target field
   console.log('🏥 Creating medical visit gigs...');
   const gigs = [];
   for (let i = 0; i < 100; i++) {
@@ -163,12 +172,16 @@ async function main() {
     const nearbyCoords = generateNearbyCoordinates(location.lat, location.lng);
     const title = generateMedicalVisitTitle();
     
+    // Set a target number of reports required for each gig (between 1 and 5)
+    const target = faker.number.int({ min: 1, max: 5 });
+    
     const gig = await prisma.gigs.create({
       data: {
         title,
         description: generateMedicalVisitDescription(title, location.name),
         price: faker.number.float({ min: 200000, max: 1500000, fractionDigits: 0 }),
         status: 'ACTIVE', // All gigs start as ACTIVE
+        target: target, // Add the target field
         latitude: nearbyCoords.lat,
         longitude: nearbyCoords.lng,
         Location: `${location.name}, Indonesia`,
@@ -179,14 +192,15 @@ async function main() {
   }
 
   // Create Applications and update gig status when accepted
-  console.log('📋 Creating applications (only one accepted per gig)...');
+  // Only passed reps can apply for gigs
+  console.log('📋 Creating applications (only from passed reps)...');
   const applications: any = [];
   const gigsWithAcceptedApplications = new Set();
   const gigsToMakeInactive: string[] = []; // Track gigs that should become INACTIVE
 
   for (let i = 0; i < 200; i++) {
     const gig = faker.helpers.arrayElement(gigs);
-    const rep = faker.helpers.arrayElement(reps);
+    const rep = faker.helpers.arrayElement(passedReps); // Only use passed reps
     
     // Avoid duplicate applications (same rep applying to same gig)
     const existingApplication = applications.find(
@@ -235,49 +249,49 @@ async function main() {
   }
 
   // Create Visit Reports - only for ACCEPTED applications
-  console.log('📝 Creating visit reports (only for accepted applications)...');
+  // Number of reports should match the target value of each gig
+  console.log('📝 Creating visit reports matching gig targets...');
   const acceptedApplications = applications.filter((app: any) => app.status === 'ACCEPTED');
   
-  // Create reports for some of the accepted applications (representing completed visits)
-  const reportsToCreate = Math.min(acceptedApplications.length, 30);
-  
-  for (let i = 0; i < reportsToCreate; i++) {
-    const application = acceptedApplications[i];
+  for (const application of acceptedApplications) {
     const gig = gigs.find(g => g.id === application.gigId);
     const company = companies.find(c => c.id === gig?.companyId);
     
     if (gig && company) {
-      // Generate report location very close to the gig location (within 500m)
-      const reportCoords = generateNearbyCoordinates(gig.latitude, gig.longitude, 0.5); // 0.5km radius
-      
-      const visitReports = [
-        `Visit berhasil dilakukan di ${gig.Location}. Dokter memberikan respon positif terhadap product presentation. Follow up diperlukan minggu depan.`,
-        `Kunjungan ke fasilitas kesehatan selesai dilaksanakan. Sampel produk telah diserahkan kepada apoteker. Koordinat kunjungan: ${reportCoords.lat.toFixed(6)}, ${reportCoords.lng.toFixed(6)}`,
-        `Meeting dengan tim medis berjalan lancar. Product detailing telah disampaikan dengan baik. Ada potensi order untuk bulan depan.`,
-        `Visit report: Presentasi produk kepada dokter spesialis berhasil. Dokumentasi kunjungan terlampir. Lokasi terverifikasi sesuai dengan assignment.`,
-        `Kunjungan medis selesai dilakukan sesuai jadwal. Customer menunjukkan interest yang tinggi terhadap produk baru. Akan ada follow up visit.`,
-        `Report kunjungan: Edukasi produk kepada tenaga medis berhasil dilakukan. Feedback positif diterima. Koordinat visit telah diverifikasi.`,
-        `Visit completed successfully. Product knowledge sharing dengan pharmacist berjalan baik. Sample distribution selesai dilakukan.`,
-        `Medical visit report: Diskusi dengan dokter mengenai clinical benefit produk. Respon sangat positif dan ada kemungkinan trial penggunaan.`,
-      ];
+      // Create reports equal to the gig's target value
+      for (let i = 0; i < gig.target; i++) {
+        // Generate report location very close to the gig location (within 500m)
+        const reportCoords = generateNearbyCoordinates(gig.latitude, gig.longitude, 0.5); // 0.5km radius
+        
+        const visitReports = [
+          `Visit berhasil dilakukan di ${gig.Location}. Dokter memberikan respon positif terhadap product presentation. Follow up diperlukan minggu depan.`,
+          `Kunjungan ke fasilitas kesehatan selesai dilaksanakan. Sampel produk telah diserahkan kepada apoteker. Koordinat kunjungan: ${reportCoords.lat.toFixed(6)}, ${reportCoords.lng.toFixed(6)}`,
+          `Meeting dengan tim medis berjalan lancar. Product detailing telah disampaikan dengan baik. Ada potensi order untuk bulan depan.`,
+          `Visit report: Presentasi produk kepada dokter spesialis berhasil. Dokumentasi kunjungan terlampir. Lokasi terverifikasi sesuai dengan assignment.`,
+          `Kunjungan medis selesai dilakukan sesuai jadwal. Customer menunjukkan interest yang tinggi terhadap produk baru. Akan ada follow up visit.`,
+          `Report kunjungan: Edukasi produk kepada tenaga medis berhasil dilakukan. Feedback positif diterima. Koordinat visit telah diverifikasi.`,
+          `Visit completed successfully. Product knowledge sharing dengan pharmacist berjalan baik. Sample distribution selesai dilakukan.`,
+          `Medical visit report: Diskusi dengan dokter mengenai clinical benefit produk. Respon sangat positif dan ada kemungkinan trial penggunaan.`,
+        ];
 
-      // Generate image URL for medical visit documentation
-      const imageCategories = ['medical', 'business', 'healthcare', 'office', 'meeting'];
-      const imageCategory = faker.helpers.arrayElement(imageCategories);
-      const imageUrl = `https://picsum.photos/800/600?random=${i}&category=${imageCategory}&sig=medicalvisit${i}`;
+        // Generate image URL for medical visit documentation
+        const imageCategories = ['medical', 'business', 'healthcare', 'office', 'meeting'];
+        const imageCategory = faker.helpers.arrayElement(imageCategories);
+        const imageUrl = `https://picsum.photos/800/600?random=${i}_${gig.id}&category=${imageCategory}&sig=medicalvisit${i}_${gig.id}`;
 
-      await prisma.reports.create({
-        data: {
-          companyId: company.id, // Include companyId as required by schema
-          gigId: application.gigId,
-          repId: application.repId,
-          reason: faker.helpers.arrayElement(visitReports),
-          imageUrl: imageUrl, // Now required, always provide an image
-          latitude: reportCoords.lat, // Report location near gig location
-          longitude: reportCoords.lng, // Report location near gig location
-          location: `Near ${gig.Location}`, // Descriptive location
-        },
-      });
+        await prisma.reports.create({
+          data: {
+            companyId: company.id,
+            gigId: application.gigId,
+            repId: application.repId,
+            reason: faker.helpers.arrayElement(visitReports),
+            imageUrl: imageUrl,
+            latitude: reportCoords.lat,
+            longitude: reportCoords.lng,
+            location: `Near ${gig.Location}`,
+          },
+        });
+      }
     }
   }
 
@@ -288,11 +302,13 @@ async function main() {
   
   const activeGigs = await prisma.gigs.count({ where: { status: 'ACTIVE' } });
   const inactiveGigs = await prisma.gigs.count({ where: { status: 'INACTIVE' } });
+  const totalReports = await prisma.reports.count();
+  const passedRepsCount = await prisma.reps.count({ where: { isPassed: true } });
 
   console.log('✅ Pharmaceutical seeding completed successfully!');
   console.log(`📊 Created:
     - ${companies.length} pharmaceutical companies
-    - ${reps.length} medical representatives  
+    - ${reps.length} medical representatives (${passedRepsCount} passed)
     - ${gigs.length} medical visit gigs:
       • ${activeGigs} ACTIVE (available for applications)
       • ${inactiveGigs} INACTIVE (already assigned)
@@ -300,13 +316,15 @@ async function main() {
       • ${acceptedCount} ACCEPTED (max 1 per gig)
       • ${pendingCount} PENDING
       • ${rejectedCount} REJECTED
-    - ${reportsToCreate} visit reports (only from accepted applications)`);
+    - ${totalReports} visit reports (matching gig targets)`);
     
   console.log(`🔐 All passwords are hashed with bcrypt salt rounds: 10`);
   console.log(`📧 Login credentials: email: pharma1@example.com, password: password123`);
   console.log(`👨‍⚕️ Rep login: email: medrep1@example.com, password: password123`);
   console.log(`📍 All reports are located within 500m of their respective gig locations`);
   console.log(`📸 All reports now include mandatory images for visit documentation`);
+  console.log(`🎯 Each gig has a target number of reports (1-5) that must be completed`);
+  console.log(`✅ Only passed reps can apply for gigs`);
 }
 
 main()

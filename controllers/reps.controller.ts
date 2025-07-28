@@ -5,6 +5,7 @@ import { generToken } from "../utils/generateToken.js";
 import { createRep, getRepByEmail, getMe, updateRepProfile, getRatingsByRepId, updateRating, passRep } from "../services/reps.service.js";
 import bcryptjs from "bcryptjs";
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from "../utils/mail.js";
 
 const supabase = createClient(
     process.env.SUPABASE_URL!,
@@ -131,6 +132,7 @@ export const GetMeHandler = asyncHandle(async (request: FastifyRequest, reply: F
             profilePic: rep.profilePic,
             phoneNo: rep.phoneNo,
             rating: rep.rating,
+            ratingCount: rep.ratingCount,
             bio: rep.bio
         }
     }, reply, 200);
@@ -160,6 +162,7 @@ export const GetRepbyId = asyncHandle(async (request: FastifyRequest, reply: Fas
                 profilePic: rep.profilePic,
                 phoneNo: rep.phoneNo,
                 rating: rep.rating,
+                ratingCount: rep.ratingCount,
                 bio: rep.bio
             }
         }, reply, 200);
@@ -176,8 +179,6 @@ export const updateRepProfileHandler = asyncHandle(async (request: FastifyReques
         return errorHandle('Rep authentication required. Please log in.', reply, 401);
     }
 
-    // 2. Extract text fields from the multipart data
-    // The `.value` is used because fastify-multipart wraps fields in objects
     const profileData = {
         name: data.name?.value,
         phoneNo: data.phoneNo?.value,
@@ -289,4 +290,35 @@ export const rateRep = asyncHandle(async (request: FastifyRequest, reply: Fastif
 
     successHandle(updatedRatings, reply, 200);
 
+});
+
+export const markRepAsFraud = asyncHandle(async (request: FastifyRequest, reply: FastifyReply) => {
+    const data = request.body as { repId: string; email:string };
+    const rep = await getMe(data.repId);
+    if (typeof rep === 'string') {
+        return errorHandle(rep, reply, 500);
+    } else if (!rep) {
+        return errorHandle('Rep not found', reply, 404);
+    } else {
+        const updatedRep = await updateRepProfile(data.repId, {
+            isFraud: true,
+        });
+        if (typeof updatedRep === 'string') {
+            return errorHandle('Failed to update Rep profile', reply, 500);
+        } else {
+            // Send email notification to the rep
+            const emailHtml = `
+                <h1>Account Suspension Notice</h1>
+                <p>Dear ${rep.name},</p>
+                <p>We regret to inform you that your Replink account has been suspended due to suspicious or fraudulent activity detected on your account.</p>
+                <p>This decision was made after a thorough review of your account activities that violated our terms of service.</p>
+                <p>If you believe this is an error, please contact our support team for further assistance.</p>
+                <p>Regards,<br>The Replink Team</p>
+            `;
+            
+            await sendEmail(rep.email, 'Account Suspension Notice - Replink', emailHtml);
+            
+            return successHandle(updatedRep, reply, 200);
+        }
+    }
 });

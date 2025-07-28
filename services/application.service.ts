@@ -138,7 +138,31 @@ export const getAcceptedApplicationsByRepId = async (repId: string) => {
                 status: AppStatus.ACCEPTED
             },
             include: {
-                gig: true
+                gig: {
+                    select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        price: true,
+                        Location:true,
+                        target:true,
+                        company:{
+                            select:{
+                                id:true,
+                                name:true,
+                            }
+                        },
+                        createdAt: true,
+                        updatedAt: true,
+                        _count: {
+                            select: {
+                                Reports: true
+                            }
+                        }
+                    }
+
+                },
+
             }
         });
         return applications;
