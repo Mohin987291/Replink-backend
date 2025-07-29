@@ -35,6 +35,10 @@ export const getReportsByGigId = async (gigId: string) => {
         },
       }
     });
+
+    if(!reports){
+      return 'No reports found';
+    }
     return {
       target:target,
       reports

@@ -15,6 +15,7 @@ const supabase = createClient(
 export const getReportsByGigIdHandler = asyncHandle(async (request: FastifyRequest, reply: FastifyReply) => {
   const { gigId } = request.params as { gigId: string };
   const companyId = request.company?.id;
+  console.log('Company ID:', companyId);
 
   // Fix: Properly parse query parameters
   const query = request.query as { isRep?: string };
@@ -37,8 +38,10 @@ export const getReportsByGigIdHandler = asyncHandle(async (request: FastifyReque
     }
     return successHandle(reports, reply, 200);
   }
+  console.log(reports)
 
   if (reports.reports[0].companyId !== companyId) {
+    console.log('CompanyID:', reports.reports[0].companyId);
     return errorHandle('Unauthorized access to reports', reply, 403);
   }
 

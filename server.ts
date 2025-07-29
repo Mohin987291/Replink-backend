@@ -65,10 +65,10 @@ const start = async (): Promise<void> => {
     fastify.register(reportRoutes, { prefix: '/api/v1' });
     fastify.register(adminRoutes, { prefix: '/api/v1' });
 
-    const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+    const port = process.env.PORT || '';
 
 
-    await fastify.listen({ port, host: 'localhost' });
+    await fastify.listen({ port: parseInt(port) || 3000, host: 'localhost' });
 
 
     console.log(`Server is running on http://0.0.0.0:${port}`);

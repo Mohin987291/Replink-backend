@@ -75,8 +75,6 @@ export const getGigById = asyncHandle(async (request: FastifyRequest, reply: Fas
     
     const company = (request.query as any).company as string;
     const gigId = (request.params as any).id as string;
-
-    console.log('Company:', company, 'Gig ID:', gigId);
     
 
     const gig = await GetGigById(gigId);
